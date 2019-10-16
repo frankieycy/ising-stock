@@ -1,0 +1,8 @@
+.DS_Store
+main
+run.sh
+
+bak/
+out/
+plt/
+rw/
