@@ -100,4 +100,15 @@ float normal(float a, float b){
 	return a+b*z;
 }
 
+int poisson(float a){
+	int k=0;
+	float u,L=exp(-a),p=1;
+	while(p>L){
+		u=uniform(0,1);
+		p*=u;
+		k++;
+	}
+	return k-1;
+}
+
 #endif

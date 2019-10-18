@@ -6,28 +6,9 @@
 #include "vector.c"
 
 /*
-Note:
-	- Last: 17/10/2019
-
-Folders:
-	- `out`: data outputs
-	- `plt`: python plots
-	- `bak`: backups
-	- `rw`: random walk model (later)
-
-Model:
-	- Ising stock market
-	- market: fundamentalists, interacting traders
-	- interacting traders placed in 2d lattice (2d Ising)
-	- spin: buy/sell decision
-	- locally seeking ferromagnetic order (nbor-interaction)
-	- indiv interacting traders influenced by nbor
-	- globally escaping ferromagnetic order (external field)
-	- returns & stock prices updated by net magnetisation
-
 Definitions:
 	T:		total time
-	dt:		num of MC sim between each time step
+	dt:		num of iter in each MC step
 	t:		current time
 
 	N:		num of interacting traders
@@ -36,6 +17,7 @@ Definitions:
 	nb:		num of nbor
 	Nb:		nbor list (int[N][N])
 	D:		pbc nbor distances (float[N][N])
+	V:		value of one's portfolio
 
 	A:		external field strength
 	B:		controls state transition
@@ -48,13 +30,9 @@ Definitions:
 	M:		magnetisation (float[T])
 	U:		return (float[T])
 	P:		stock price (float[T])
-
-	f0:		data
-	f1:		spin
 */
 
 #define T  10000
-#define dt 100
 #define Nx 32
 #define Ny 32
 #define K  1.
@@ -63,10 +41,9 @@ Definitions:
 #define B 1
 #define J 1
 
-int   t,N,nb,**Nb;
-float m,h,H[T],M[T],U[T],P[T],*S,**D;
+int   dt,t,N,nb,**Nb;
+float m,h,H[T],M[T],U[T],P[T],*S,*V,**D;
 vec   a1,a2,b1,b2,*R;
-FILE  *f0,*f1;
 
 /********************************************************/
 
@@ -74,23 +51,25 @@ void update(){
 	int i;
 	float x,p,m,u;
 
+	//dt=100;
+	dt=poisson(100);
 	for(int n=0; n<dt; n++){
-		/* MC: update traders' decisions */
+		/* MC: update traders' decisions; single trade day */
 		m=mean(S,N);
 
 		i=(int)uniform(0,N); // sample a trader
 		h=0; // hamiltonian
 		for(int j=0; j<nb; j++)
-			h+=J*S[Nb[i][j]];
-		h-=A*S[i]*fabs(m);
+			h+=J*S[Nb[i][j]]; // local
+		h-=A*S[i]*fabs(m); // global
 
 		x=uniform(0,1);
 		p=1/(1+exp(-2*B*h));
-		if(x<p) S[i]=+1; // buy
-		else S[i]=-1; // sell
+		if(x<p) {S[i]=+1; V[i]+=P[t-1];} // buy
+		else {S[i]=-1; V[i]-=P[t-1];} // sell
 	}
 
-	/* record data */
+	/* record current data */
 	H[t]=h;
 	M[t]=m;
 	U[t]=M[t]-M[t-1];
@@ -99,16 +78,27 @@ void update(){
 	t++;
 }
 
-void print_data(FILE *f){
-	/* print to data file */
-	int t0=2000; // discard initial data
+void print_port(){
+	/* portfolio */
+	FILE *f = fopen("out/port.csv","w");
+	fprintf(f,"index,value\n");
+	for(int i=0; i<N; i++)
+		fprintf(f,"%d,%f\n",i,V[i]);
+	fclose(f);
+}
+
+void print_data(){
+	/* time series data */
+	int t0=2000; // discard initial non-eqm data
+	FILE *f = fopen("out/data.csv","w");
 	fprintf(f,"time,price,magnetisation,return\n");
 	for(int t=t0; t<T; t++)
 		fprintf(f,"%d,%f,%f,%f\n",t-t0,P[t],M[t],U[t]);
+	fclose(f);
 }
 
 void print_spin(FILE *f){
-	/* print to spin file */
+	/* spin */
 	int n=0;
 	for(int i=0; i<Nx; i++){
 		for(int j=0; j<Ny; j++){
@@ -123,7 +113,9 @@ void print_spin(FILE *f){
 
 void iter(){
 	while(t<T){
+		/* whole time horizon */
 		update();
+/*
 		if(t%1000==0){
 			char file[sizeof "out/spin_00000.csv"];
 			sprintf(file,"out/spin_%05d.csv",t);
@@ -131,6 +123,7 @@ void iter(){
 			print_spin(f1);
 			fclose(f1);
 		}
+*/
 	}
 	normalise(U,T);
 }
@@ -145,6 +138,7 @@ void init(){
 
 	Nb=int2d(N,N);
 	S=float1d(N);
+	V=float1d(N);
 	D=float2d(N,N);
 	R=vec1d(N);
 
@@ -162,6 +156,7 @@ void init(){
 			x=uniform(0,1);
 			if(x<0.5) S[n]=+1;
 			else S[n]=-1;
+			V[n]=0;
 			R[n]=cart2d(i,j); // position on lattice
 			n++;
 		}
@@ -217,8 +212,7 @@ int main(){
 	make_nbor();
 	iter();
 
-	f0=fopen("out/data.csv","w");
-	print_data(f0);
-	fclose(f0);
+	print_data();
+	print_port();
 	return 0;
 }
