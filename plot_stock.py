@@ -1,15 +1,13 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 
 mpl.rc('text',usetex=True)
-Figure(tight_layout=True)
 
 loc = 'plt/'
-data = 'real' # Ising or real
+data = 'ising' # ising or real
 
-if data == 'Ising':
+if data == 'ising':
 	f = 'out/data.csv' # ising stock
 if data == 'real':
 	f = '0001.HK.csv' # real stock
@@ -17,7 +15,7 @@ if data == 'real':
 d = np.loadtxt(f,delimiter=',',skiprows=1)
 t = d[:-1,0] # time
 p = d[:,1]   # price
-u = (p[1:,]-p[:-1,])/p[:-1,] # return
+u = (p[1:]-p[:-1])/p[:-1] # return
 
 # normalise return
 mu0 = np.mean(u)
@@ -59,7 +57,7 @@ fig.savefig(loc+data+'_qq.png')
 
 # return: distribution
 fig = plt.figure(figsize=(6,4))
-_,bins,_ = plt.hist(u_norm,color='black',bins=33,density=True,range=[-4,4])
+_,bins,_ = plt.hist(u_norm,color='black',bins=25,density=True,range=[-4,4])
 plt.plot(bins,1/np.sqrt(2*np.pi)*np.exp(-bins**2/2),color='grey')
 plt.title('Distribution of return: '+data)
 plt.xlabel('return')

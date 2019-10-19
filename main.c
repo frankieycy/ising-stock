@@ -30,11 +30,18 @@ Definitions:
 	M:		magnetisation (float[T])
 	U:		return (float[T])
 	P:		stock price (float[T])
+
+Lookup:
+	search for " [##] " for key changeable params
+
+To do:
+autocorrelation, random walk, trading strategy, portfolio
 */
 
+// [##]
 #define T  10000
-#define Nx 32
-#define Ny 32
+#define Nx 50
+#define Ny 50
 #define K  1.
 
 #define A 20
@@ -51,6 +58,7 @@ void update(){
 	int i;
 	float x,p,m,u;
 
+	// [##]
 	//dt=100;
 	dt=poisson(100);
 	for(int n=0; n<dt; n++){
@@ -116,12 +124,13 @@ void iter(){
 		/* whole time horizon */
 		update();
 /*
+		// [##]
 		if(t%1000==0){
 			char file[sizeof "out/spin_00000.csv"];
 			sprintf(file,"out/spin_%05d.csv",t);
-			f1=fopen(file,"w");
-			print_spin(f1);
-			fclose(f1);
+			FILE *f=fopen(file,"w");
+			print_spin(f);
+			fclose(f);
 		}
 */
 	}

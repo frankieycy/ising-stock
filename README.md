@@ -1,7 +1,7 @@
 ## Ising Stock Market
 
 * PHYS4061 Project B: Monte Carlo Simulation
-* Last: 18/10/2019
+* Last: 19/10/2019
 
 ## Model
 
@@ -14,9 +14,23 @@
 * returns & stock prices updated by net magnetisation
 * snaphots taken per 1000 time steps (black & white as opposite spins):
 
-	![](ani.gif)
+	![](demo/ani.gif)
+
+* simulated stock price:
+
+	![](demo/price.png)
 
 ## Params
+
+* definitions: ...
+* toy model:
+	T:	10000
+	Nx:	50
+	Ny:	50
+	K:	1 (first nbor)
+	A:	20
+	B:	1
+	J:	1
 
 ## Codes
 
