@@ -7,7 +7,8 @@
 
 /*
 # Model
-the base model (without additional features)
+decaying couplings w/ homogeneous traders
+all couplings Jij ~ 1/dij, where dij = pbc distance
 
 # Definitions
 T     total time
@@ -35,28 +36,27 @@ P     stock price (float[T])
 
 # Lookup
 * search for " [##] " for key changeable params
-* lattice Nx,Ny     = 50,50
-* cutoff K          = 1
+* lattice Nx,Ny     = 24,24
+* cutoff K          = 4
 * field coupling A  = 20
 * prob control B    = 1
-* spin coupling J   = 1
-* daily trades dt   = 100
+* spin coupling J   = 0.5/dij
+* daily trades dt   = 150
 */
 
 // [##] settings
 #define seed 0
 #define T    10000
-#define Nx   50
-#define Ny   50
+#define Nx   24
+#define Ny   24
 #define N    Nx*Ny
-#define K    1.
+#define K    4.
 
 #define A    20
 #define B    1
-#define J    1
 
 int     dt,t,nb,Nb[N][N];
-float   m,h,M[T],U[T],P[T],S[N],V[N],D[N][N];
+float   m,h,M[T],U[T],P[T],S[N],V[N],D[N][N],J[N][N];
 vec     a1,a2,b1,b2,R[N];
 
 /********************************************************/
@@ -108,6 +108,13 @@ void info(int period){
 
 /* model */
 
+void trader_feature(){
+	/* (re-)assign spin coupling strengths */
+	for(int i=0; i<N; i++)
+		for(int n=0; n<nb; n++)
+			J[i][Nb[i][n]]=0.5/D[i][Nb[i][n]];
+}
+
 void init(){
 	t=1;
 
@@ -134,6 +141,8 @@ void init(){
 
 	M[0]=mean(S,N);
 	P[0]=1; // initial stock price
+
+	trader_feature();
 }
 
 void update(){
@@ -141,7 +150,7 @@ void update(){
 	float x,p,m,u;
 
 	// [##] a single MC step (transactions happening in a trade day)
-	dt=100;
+	dt=150;
 	for(int time=0; time<dt; time++){
 		/* MC: update traders' decisions; single trade day */
 		/* in each time step, only a single trade */
@@ -150,7 +159,7 @@ void update(){
 		i=(int)uniform(0,N-1); // sample a trader
 		h=0; // hamiltonian
 		for(int n=0; n<nb; n++)
-			h+=J*S[Nb[i][n]]; // local alignment
+			h+=J[i][Nb[i][n]]*S[Nb[i][n]]; // local alignment
 		h-=A*S[i]*fabs(m); // reaction to global market atmosphere
 
 		x=uniform(0,1);

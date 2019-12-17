@@ -7,7 +7,8 @@
 
 /*
 # Model
-the base model (without additional features)
+many-nbor but weak-coupling model
+traders subject to more diverse but weaker local couplings
 
 # Definitions
 T     total time
@@ -35,25 +36,25 @@ P     stock price (float[T])
 
 # Lookup
 * search for " [##] " for key changeable params
-* lattice Nx,Ny     = 50,50
-* cutoff K          = 1
+* lattice Nx,Ny     = 24,24
+* cutoff K          = 4
 * field coupling A  = 20
 * prob control B    = 1
-* spin coupling J   = 1
+* spin coupling J   = 0.12
 * daily trades dt   = 100
 */
 
 // [##] settings
 #define seed 0
 #define T    10000
-#define Nx   50
-#define Ny   50
+#define Nx   24
+#define Ny   24
 #define N    Nx*Ny
-#define K    1.
+#define K    4.
 
 #define A    20
 #define B    1
-#define J    1
+#define J    0.12
 
 int     dt,t,nb,Nb[N][N];
 float   m,h,M[T],U[T],P[T],S[N],V[N],D[N][N];

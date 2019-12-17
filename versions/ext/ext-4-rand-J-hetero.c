@@ -7,7 +7,14 @@
 
 /*
 # Model
-the base model (without additional features)
+random couplings w/ heterogeneous traders
+two trader types:
+1 = noise trader,      constituting 90% of population
+2 = rational trader,   constituting 10% of population
+at every time step, spin coupling strengths Jij are updated
+according to:
+1: normal(2.0,0.3*(1+|M|))
+2: normal(0.5,0.1*(1+|M|))
 
 # Definitions
 T     total time
@@ -33,30 +40,32 @@ M     magnetisation (float[T])
 U     return (float[T])
 P     stock price (float[T])
 
+Type  trader type: 1 = noise trader (90%); 2 = rational trader (10%)
+
 # Lookup
 * search for " [##] " for key changeable params
-* lattice Nx,Ny     = 50,50
+* lattice Nx,Ny     = 24,24
 * cutoff K          = 1
 * field coupling A  = 20
 * prob control B    = 1
-* spin coupling J   = 1
+* spin coupling J   = normal(2.0,0.3*(1+|M|)) [type 1]
+                    = normal(0.5,0.1*(1+|M|)) [type 2]
 * daily trades dt   = 100
 */
 
 // [##] settings
 #define seed 0
 #define T    10000
-#define Nx   50
-#define Ny   50
+#define Nx   24
+#define Ny   24
 #define N    Nx*Ny
 #define K    1.
 
 #define A    20
 #define B    1
-#define J    1
 
-int     dt,t,nb,Nb[N][N];
-float   m,h,M[T],U[T],P[T],S[N],V[N],D[N][N];
+int     dt,t,nb,Nb[N][N],Type[N];
+float   m,h,M[T],U[T],P[T],S[N],V[N],D[N][N],J[N][N];
 vec     a1,a2,b1,b2,R[N];
 
 /********************************************************/
@@ -108,6 +117,18 @@ void info(int period){
 
 /* model */
 
+void trader_feature(){
+	/* (re-)assign spin coupling strengths */
+	for(int i=0; i<N; i++){
+		if(Type[i]==1)
+			for(int n=0; n<nb; n++)
+				J[i][Nb[i][n]]=normal(2.0,0.3*(1+fabs(M[t])));
+		if(Type[i]==2)
+			for(int n=0; n<nb; n++)
+				J[i][Nb[i][n]]=normal(0.5,0.1*(1+fabs(M[t])));
+	}
+}
+
 void init(){
 	t=1;
 
@@ -127,6 +148,11 @@ void init(){
 			if(x<0.5) S[n]=+1; // buy position
 			else S[n]=-1; // sell position
 
+			// trader type
+			x=uniform(0,1);
+			if(x<0.9) Type[n]=1; // noise trader (tend to follow)
+			else Type[n]=2; // rational trader (not tend to follow)
+
 			V[n]=0;
 			R[n]=cart2d(i,j); // position on lattice
 			n++;
@@ -134,6 +160,8 @@ void init(){
 
 	M[0]=mean(S,N);
 	P[0]=1; // initial stock price
+
+	trader_feature();
 }
 
 void update(){
@@ -150,7 +178,7 @@ void update(){
 		i=(int)uniform(0,N-1); // sample a trader
 		h=0; // hamiltonian
 		for(int n=0; n<nb; n++)
-			h+=J*S[Nb[i][n]]; // local alignment
+			h+=J[i][Nb[i][n]]*S[Nb[i][n]]; // local alignment
 		h-=A*S[i]*fabs(m); // reaction to global market atmosphere
 
 		x=uniform(0,1);
@@ -163,6 +191,8 @@ void update(){
 	M[t]=mean(S,N);
 	U[t]=M[t]-M[t-1];
 	P[t]=P[t-1]*exp(U[t]);
+
+	trader_feature();
 
 	t++;
 }

@@ -1,9 +1,7 @@
 #ifndef VECTOR
 #define VECTOR
-#include <stdlib.h>
-#include <math.h>
 
-/* definition */
+/**** def ****/
 
 typedef struct vec{
 	int l;
@@ -16,19 +14,20 @@ vec v(int l){
 	return x;
 }
 
-/*************/
+/********************************************************/
 
-/* handling */
+/**** handling ****/
 
 vec cart2d(float a, float b){
+	/* Cartesian 2d vec */
 	vec x=v(2);
 	x.v[0]=a; x.v[1]=b;
 	return x;
 }
 
-/*************/
+/********************************************************/
 
-/* dynamic arrays */
+/**** dynamic arrays ****/
 
 int **int2d(int r, int c){ 
 	/* init 2d int array */
@@ -68,9 +67,9 @@ vec **vec2d(int r, int c){
 	return x;
 }
 
-/*************/
+/********************************************************/
 
-/* arithmetic */
+/**** arithmetic ****/
 
 float mag(vec a){
 	/* vector norm */

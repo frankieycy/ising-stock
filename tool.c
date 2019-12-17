@@ -1,16 +1,14 @@
 #ifndef TOOL
 #define TOOL
-#include <stdlib.h>
-#include <math.h>
 
-/* misc */
+/**** misc ****/
 
 void line(){
-	printf("--------------\n");
+	printf("-------------------------------------\n");
 }
 
 void fline(FILE *f){
-	fprintf(f,"--------------\n");
+	fprintf(f,"-------------------------------------\n");
 }
 
 float mod0(float x, float d){
@@ -33,7 +31,16 @@ float roundsf(float a, int n){
 
 /********************************************************/
 
-/* statistics */
+/**** handling ****/
+
+float window(float *a, int n, int m, float func(float*,int)){
+	/* operate func on a[n] to a[m] */
+	return func(a+n,m-n+1);
+}
+
+/********************************************************/
+
+/**** statistics ****/
 
 float sum(float *a, int l){
 	float x=0;
@@ -43,6 +50,13 @@ float sum(float *a, int l){
 
 float mean(float *a, int l){
 	return sum(a,l)/l;
+}
+
+float wmean(float *a, int l){
+	/* linearly weighted mean */
+	float x=0;
+	for(int i=0; i<l; i++) x+=(i+1)*a[i];
+	return x/(l*(l+1)/2);
 }
 
 float var(float *a, int l){
@@ -58,6 +72,7 @@ float std(float *a, int l){
 }
 
 void normalise(float *a, int l){
+	/* convert to mean 0, variance 1 */
 	float m,s;
 	m=mean(a,l);
 	s=std(a,l);
@@ -87,7 +102,33 @@ void print_stat(float *a, int l){
 
 /********************************************************/
 
-/* sampling */
+/**** tech indicators ****/
+
+float SMA(float *a, int l){
+	/* simple moving average */
+	return mean(a,l);
+}
+
+float WMA(float *a, int l){
+	/* weighted moving average */
+	return wmean(a,l);
+}
+
+float RSI(float *a, int l){
+	/* relative strength index */
+	float x,R=0,D=0;
+	for(int i=1; i<l; i++){
+		x=a[i]-a[i-1];
+		if(x>0) R+=x; // rise
+		if(x<0) D-=x; // drop
+	}
+	if(D==0) return 100;
+	return 100*(1-1/(1+R/D));
+}
+
+/********************************************************/
+
+/**** sampling ****/
 
 float uniform(float a, float b){
 	float u=(float)rand()/RAND_MAX;

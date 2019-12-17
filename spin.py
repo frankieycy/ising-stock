@@ -2,6 +2,8 @@ import imageio,glob,re
 import numpy as np
 import scipy.misc as misc
 
+# generate spin evolution with spin data files
+
 def file_num(f):
 	return int(re.split('[_ .]',f)[1])
 
